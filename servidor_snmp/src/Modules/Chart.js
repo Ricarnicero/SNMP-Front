@@ -23,7 +23,7 @@ class Chart extends Component {
         serverid: props.serverid,
         oid: props.oid
       }),
-      () => {
+      () => {        
         this.getActivity(this.state.serverid, this.state.oid, this.state.count);
       }
     );
@@ -48,7 +48,7 @@ class Chart extends Component {
         .where("oidName", "==", oid)
         .orderBy("date", "desc")
         .limit(count)
-        .onSnapshot(querySnapshot => {
+        .get().then(querySnapshot => {
           querySnapshot.forEach(function(doc) {
             var myDate = doc.data().date.toDate();
 
