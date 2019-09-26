@@ -1,9 +1,12 @@
 import React, { Component } from "react";
 import "./App.css";
-import * as firebase from "firebase";
-import Chart from "./Modules/Chart";
+import firebase from "firebase";
+//import Chart from "./Modules/Chart";
 import "bootstrap/dist/css/bootstrap.min.css";
-import ServidorSNMP from "./SNMP/ServidorSNMP";
+//import ServidorSNMP from "./SNMP/ServidorSNMP";
+import ServerDetails from "./Pages/serverDetails";
+import Servers from "./Pages/Servers";
+import NewServer from "./Pages/NewServer";
 
 const firebaseConfig = {
   apiKey: "AIzaSyApzaUbCad-8VciNeuH1UTSkCrAct8Tn2o",
@@ -17,58 +20,20 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-const data = [
-  {
-    hora: "11:15",
-    valor: 4000
-  },
-  {
-    hora: "11:16",
-    valor: 2516
-  },
-  {
-    hora: "11:17",
-    valor: 3545
-  },
-  {
-    hora: "11:18",
-    valor: 1555
-  }
-];
-
 class App extends Component {
   constructor() {
     super();
-    this.state = { name: "Pepe", dataOIDS: [] };
-    this.db = firebase.firestore();
-  }
-
-  componentDidMount() {
-    const server = new ServidorSNMP();
-    server.Monitorear(
-      "192.168.0.29",
-      "public",
-      ["1.3.6.1.2.1.1.5.0", "1.3.6.1.2.1.1.6.0"],
-      "29RPTqKDQoAfo4j3beCf"
-    );
-    /*this.db.collection("Servidores").onSnapshot(querySnapshot => {
-      querySnapshot.forEach(servidor => {
-        server.Monitorear(
-          servidor.data().ip,
-          servidor.data().comunidad,
-          servidor.data().OIDS,
-          servidor.id
-        );
-      });
-    });*/
+    const urlParams = new window.URLSearchParams(window.location.search);
+    this.serverid = urlParams.get("serverid");
   }
 
   render() {
-    return (
-      <div className="row">
-        <Chart name="Chart1" data={data} />
-        <Chart name="Chart2" data={data} />
-        <Chart name="Chart3" data={data} />
+    return this.serverid ? (
+      <ServerDetails serverid={this.serverid} />
+    ) : (
+      <div>
+        <NewServer />
+        <Servers />
       </div>
     );
   }

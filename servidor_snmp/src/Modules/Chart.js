@@ -1,44 +1,160 @@
 import React, { Component } from "react";
+import { firestore } from "firebase";
 import {
   AreaChart,
   Area,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip
+  Tooltip,
+  ResponsiveContainer
 } from "recharts";
-
 class Chart extends Component {
   static jsfiddleUrl = "https://jsfiddle.net/alidingling/xqjtetw0/";
+  constructor(props) {
+    super(props);
+    this.db = firestore();
+    this.state = { data: [{}], serverid: " ", oid: " ", count: 25, ref: "" };
+  }
+
+  componentDidMount() {
+    this.setState(
+      (state, props) => ({
+        serverid: props.serverid,
+        oid: props.oid
+      }),
+      () => {
+        this.getActivity(this.state.serverid, this.state.oid, this.state.count);
+      }
+    );
+  }
+
+  setDataState(data, ref) {
+    this.setState({ data: data, ref: ref });
+  }
+
+  setDataState(data) {
+    this.setState({ data: data });
+  }
+
+  getActivity(serverid, oid, count) {
+    var data = [];
+    var ref;
+    try {
+      this.db
+        .collection("Servidores")
+        .doc(serverid)
+        .collection("Registros")
+        .where("oidName", "==", oid)
+        .orderBy("date", "desc")
+        .limit(count)
+        .onSnapshot(querySnapshot => {
+          querySnapshot.forEach(function(doc) {
+            var myDate = doc.data().date.toDate();
+
+            data.push({
+              value: doc.data().value,
+              date:
+                myDate.getHours() +
+                ":" +
+                myDate.getMinutes() +
+                ":" +
+                myDate.getSeconds()
+            });
+            ref = doc.data().refvalue;
+          });
+          if (data && ref) this.setDataState(data.reverse(), ref);
+          else if (data) this.setDataState(data.reverse());
+        });
+    } catch (ex) {
+      console.error(ex);
+    }
+  }
+
+  onClickZoomIn = e => {
+    var count = this.state.count;
+    if (count > 5)
+      this.setState(
+        (prevState, props) => ({ count: prevState.count - 1 }),
+        () => {
+          this.getActivity(
+            this.state.serverid,
+            this.state.oid,
+            this.state.count
+          );
+        }
+      );
+  };
+
+  onClickZoomOut = e => {
+    var count = this.state.count;
+    if (count < 25)
+      this.setState(
+        (prevState, props) => ({ count: prevState.count + 1 }),
+        () => {
+          this.getActivity(
+            this.state.serverid,
+            this.state.oid,
+            this.state.count
+          );
+        }
+      );
+  };
+
+  getZoomPerc = () => {
+    var num = 500 / this.state.count;
+    return Math.ceil(num) + "%";
+  };
 
   render() {
     return (
-      <div className="col">
-        <h3>{this.props.name}</h3>
-        <AreaChart
-          width={400}
-          height={250}
-          data={this.props.data}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-        >
-          <defs>
-            <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
-              <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <XAxis dataKey="hora" />
-          <YAxis />
-          <CartesianGrid strokeDasharray="3 3" />
-          <Tooltip />
-          <Area
-            type="monotone"
-            dataKey="valor"
-            stroke="#8884d8"
-            fillOpacity={1}
-            fill="url(#colorUv)"
-          />
-        </AreaChart>
+      <div className="col-12 col-md-6 my-3">
+        <div className="card mx">
+          <h3 className="text-center">{this.props.name}</h3>
+          <div className="row">
+            <div className="col">
+              <button onClick={this.onClickZoomOut}>
+                <span>&#10134;</span>
+              </button>
+            </div>
+            <div className="col">Zoom: {this.getZoomPerc()}</div>
+            <div className="col">
+              <button onClick={this.onClickZoomIn}>
+                <span>&#10133;</span>
+              </button>
+            </div>
+          </div>
+
+          <div style={{ width: "100%", height: 300 }}>
+            <ResponsiveContainer>
+              <AreaChart height={250} data={this.state.data}>
+                <defs>
+                  <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="date" />
+                <YAxis
+                  type="number"
+                  domain={[
+                    0,
+                    dataMax => (this.state.ref ? this.state.ref : dataMax * 2)
+                  ]}
+                />
+                <CartesianGrid strokeDasharray="3 3" />
+                <Tooltip />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="#8884d8"
+                  fillOpacity={1}
+                  fill="url(#colorUv)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
     );
   }
