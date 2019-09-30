@@ -14,7 +14,14 @@ class Chart extends Component {
   constructor(props) {
     super(props);
     this.db = firestore();
-    this.state = { data: [{}], serverid: " ", oid: " ", count: 25, ref: "" };
+    this.state = {
+      data: [{}],
+      serverid: " ",
+      oid: " ",
+      count: 25,
+      ref: "",
+      alert: ""
+    };
   }
 
   componentDidMount() {
@@ -23,18 +30,14 @@ class Chart extends Component {
         serverid: props.serverid,
         oid: props.oid
       }),
-      () => {        
+      () => {
         this.getActivity(this.state.serverid, this.state.oid, this.state.count);
       }
     );
   }
 
-  setDataState(data, ref) {
-    this.setState({ data: data, ref: ref });
-  }
-
-  setDataState(data) {
-    this.setState({ data: data });
+  setDataState(data, ref, alrt) {
+    this.setState({ data: data, ref: ref, alert: alrt });
   }
 
   getActivity(serverid, oid, count) {
@@ -48,7 +51,8 @@ class Chart extends Component {
         .where("oidName", "==", oid)
         .orderBy("date", "desc")
         .limit(count)
-        .get().then(querySnapshot => {
+        .get()
+        .then(querySnapshot => {
           querySnapshot.forEach(function(doc) {
             var myDate = doc.data().date.toDate();
 
@@ -59,12 +63,13 @@ class Chart extends Component {
                 ":" +
                 myDate.getMinutes() +
                 ":" +
-                myDate.getSeconds()
+                myDate.getSeconds(),
+              alert: doc.data().alert
             });
             ref = doc.data().refvalue;
           });
-          if (data && ref) this.setDataState(data.reverse(), ref);
-          else if (data) this.setDataState(data.reverse());
+          var alrt = data[0].alert;
+          this.setDataState(data.reverse(), ref, alrt);
         });
     } catch (ex) {
       console.error(ex);
@@ -107,8 +112,16 @@ class Chart extends Component {
   };
 
   render() {
+    var style;
+    if (this.state.alert) {
+      style = { color: "red" };
+      alert(
+        `Cuidado con el elemento ${this.props.name}. Ha alcanzado un estado no deseado`
+      );
+    }
+
     return (
-      <div className="col-12 col-md-6 my-3">
+      <div className="col-12 col-md-6 my-3" style={style}>
         <div className="card mx">
           <h3 className="text-center">{this.props.name}</h3>
           <div className="row">
@@ -124,7 +137,6 @@ class Chart extends Component {
               </button>
             </div>
           </div>
-
           <div style={{ width: "100%", height: 300 }}>
             <ResponsiveContainer>
               <AreaChart height={250} data={this.state.data}>
