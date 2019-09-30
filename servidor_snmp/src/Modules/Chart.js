@@ -68,7 +68,9 @@ class Chart extends Component {
             });
             ref = doc.data().refvalue;
           });
-          var alrt = data[0].alert;
+          var alrt;
+          if (data.length > 0) alrt = data[0].alert;
+          else alrt = false;
           this.setDataState(data.reverse(), ref, alrt);
         });
     } catch (ex) {

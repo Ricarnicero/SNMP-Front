@@ -6,29 +6,34 @@ class ServerDetails extends Component {
   constructor() {
     super();
     this.db = firestore();
-    this.state = { data: [], oids: [], serverid: " "};
+    this.state = { data: [], oids: [], serverid: " " };
   }
 
-  getAllData = () =>{
+  getAllData = () => {
     this.db
-    .collection("Servidores")
-    .doc(this.state.serverid)
-    .get()
-    .then(doc => {
-      this.setState({
-        data: doc.data(),
-        serverid: doc.id
+      .collection("Servidores")
+      .doc(this.state.serverid)
+      .get()
+      .then(doc => {
+        this.setState({
+          data: doc.data(),
+          serverid: doc.id
+        });
       });
-    });
-  this.db.collection("OIDS").where("once","==",false).get().then(querySnapshot => {
-    var data = [];
-    querySnapshot.forEach(oid => {
-      data.push(oid.data().nombre);
-    });
-    this.setState({
-      oids: data
-    });});
-  }
+    this.db
+      .collection("OIDS")
+      .where("once", "==", false)
+      .get()
+      .then(querySnapshot => {
+        var data = [];
+        querySnapshot.forEach(oid => {
+          data.push(oid.data().nombre);
+        });
+        this.setState({
+          oids: data
+        });
+      });
+  };
   componentDidMount() {
     this.setState(
       (state, props) => ({
@@ -36,9 +41,9 @@ class ServerDetails extends Component {
       }),
       () => {
         this.getAllData();
-        setInterval(()  => {
-        this.getAllData();
-        },60000);
+        setInterval(() => {
+          this.getAllData();
+        }, 60000);
       }
     );
   }
@@ -48,22 +53,27 @@ class ServerDetails extends Component {
       <div className="container text-center">
         <h1>{this.state.data.alias}</h1>
         <div className="row my-1">
-        <b>ubicacion:</b> {this.state.data.ubicacion}
-
+          <b>Ubicacion:</b> {this.state.data.ubicacion}
         </div>
         <div className="row my-1">
-        <b>Tiempo corriendo el sistema:</b> {this.state.data.tiempo_sistema_encendido}
-
+          <b>Tiempo corriendo el sistema:</b>{" "}
+          {this.state.data.tiempo_sistema_encendido}
         </div>
         <div className="row my-1">
-        <b>Contaco:</b> {this.state.data.contacto}
-
+          <b>Contaco:</b> {this.state.data.contacto}
         </div>
         <div className="row my-1">
-        <b>Sistema Opertivo y hora:</b> {this.state.data.sistema_operativo}
-
+          <b>Sistema Opertivo y hora:</b> {this.state.data.sistema_operativo}
         </div>
-
+        <div className="row my-1">
+          <b>Tarjeta red:</b> {this.state.data.tarjeta_red}
+        </div>
+        <div className="row my-1">
+          <b>Bytes enviados:</b> {this.state.data.bytes_send}
+        </div>
+        <div className="row my-1">
+          <b>Bytes recibidos:</b> {this.state.data.bytes_recieved}
+        </div>
         <div className="row my-1">
           {this.state.oids.map(oid => {
             return (
